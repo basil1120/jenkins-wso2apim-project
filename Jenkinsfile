@@ -83,7 +83,7 @@ pipeline {
                         echo "---------- Start APICTL Login ---------"
                         apictl login dev -u ${WSO2_USERNAME} -p ${WSO2_PASSWORD} --insecure
                         apictl set --export-directory /Users/basam/.wso2apictl/exported
-                        apictl export api -n PizzaShackAPI -v 1.0.0 -e dev
+                        apictl export api -n PizzaShackAPI -v 1.0.0 -e dev -k
                         apictl logout dev -k
                         echo "---------- Start Set Export Directory ---------"
                         pwd
