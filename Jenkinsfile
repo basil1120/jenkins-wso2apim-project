@@ -32,7 +32,7 @@ pipeline {
                 script {
                     withCredentials([usernamePassword(credentialsId: 'WSO2_CREDENTIALS', usernameVariable: 'WSO2_USERNAME', passwordVariable: 'WSO2_PASSWORD')]) {
                         sh """
-                        apictl login ${WSO2_APIM_HOST} -u ${WSO2_USERNAME} -p ${WSO2_PASSWORD} -t ${WSO2_TENANT} --insecure
+                        apictl login ${WSO2_APIM_HOST} -u ${WSO2_USERNAME} -p ${WSO2_PASSWORD} --insecure
                         """
                     }
                 }
@@ -42,11 +42,14 @@ pipeline {
         // stage('Login to WSO2 API Manager') {
         //     steps {
         //         script {
-        //             sh """
-        //             apictl login ${WSO2_APIM_HOST} -u ${WSO2_USERNAME} -p ${WSO2_PASSWORD} -t ${WSO2_TENANT} --insecure
-        //             """
+        //             withCredentials([usernamePassword(credentialsId: 'WSO2_CREDENTIALS', usernameVariable: 'WSO2_USERNAME', passwordVariable: 'WSO2_PASSWORD')]) {
+        //                 sh """
+        //                 apictl login ${WSO2_APIM_HOST} -u ${WSO2_USERNAME} -p ${WSO2_PASSWORD} -t ${WSO2_TENANT} --insecure
+        //                 """
+        //             }
         //         }
         //     }
         // }
+
     }
 }
