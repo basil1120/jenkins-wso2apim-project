@@ -49,19 +49,38 @@ pipeline {
                 script {
                     sh """
                     echo "---------- Listing APICTL Environments ---------"
-                    apictl list env > apictl_envs.txt
+                    apictl get envs | tail -n +2 | awk '{print \$1}' > apictl_envs.txt
 
                     echo "---------- Removing APICTL Environments ---------"
-                    while read -r envName _; do
-                        if [ "\$envName" != "NAME" ]; then
+                    while read -r envName; do
+                        if [ ! -z "\$envName" ]; then
                             echo "Removing APICTL environment: \$envName"
                             apictl remove env "\$envName"
                         fi
-                    done < <(tail -n +2 apictl_envs.txt)
+                    done < apictl_envs.txt
                     """
                 }
             }
         }
+
+        // stage('Clean & Remove APICTL Environments') {
+        //     steps {
+        //         script {
+        //             sh """
+        //             echo "---------- Listing APICTL Environments ---------"
+        //             apictl get envs > apictl_envs.txt
+
+        //             echo "---------- Removing APICTL Environments ---------"
+        //             while read -r envName _; do
+        //                 if [ "\$envName" != "NAME" ]; then
+        //                     echo "Removing APICTL environment: \$envName"
+        //                     apictl remove env "\$envName"
+        //                 fi
+        //             done < <(tail -n +2 apictl_envs.txt)
+        //             """
+        //         }
+        //     }
+        // }
 
 
         stage('Login to WSO2 API Manager') {
