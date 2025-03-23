@@ -4,14 +4,19 @@ pipeline {
     environment {
 
         WSO2_TENANT    = "carbon.super"  // Change if using a tenant
+        //MI Host
         WSO2_MI_HOST_DEV = "https://localhost:8253"
         WSO2_MI_HOST_SIT = "https://localhost:8253"
+        //API Manager Host
         WSO2_APIM_HOST_DEV = "https://localhost:9443"
         WSO2_APIM_HOST_SIT = "https://localhost:9443"
+        //Publisher Host
         WSO2_PUBLISHER_HOST_DEV ="https://localhost:9443/publisher"
         WSO2_PUBLISHER_HOST_SIT ="https://localhost:9443/publisher"
+        //Dev-Portal Host
         WSO2_DEVPORTAL_HOST_DEV ="https://localhost:9443/devportal"
         WSO2_DEVPORTAL_HOST_SIT ="https://localhost:9443/devportal"
+        //Admin-Portal Host
         WSO2_ADMINPORTAL_HOST_DEV ="https://localhost:9443/admin"
         WSO2_ADMINPORTAL_HOST_SIT ="https://localhost:9443/admin"
 
@@ -63,25 +68,6 @@ pipeline {
             }
         }
 
-        // stage('Clean & Remove APICTL Environments') {
-        //     steps {
-        //         script {
-        //             sh """
-        //             echo "---------- Listing APICTL Environments ---------"
-        //             apictl get envs > apictl_envs.txt
-
-        //             echo "---------- Removing APICTL Environments ---------"
-        //             while read -r envName _; do
-        //                 if [ "\$envName" != "NAME" ]; then
-        //                     echo "Removing APICTL environment: \$envName"
-        //                     apictl remove env "\$envName"
-        //                 fi
-        //             done < <(tail -n +2 apictl_envs.txt)
-        //             """
-        //         }
-        //     }
-        // }
-
 
         stage('Login to WSO2 API Manager') {
             steps {
@@ -92,10 +78,13 @@ pipeline {
                         apictl set --http-request-timeout 90000
                         apictl set --tls-renegotiation-mode freely
                         echo "---------- Starting Setting APICTL Environments ---------"
-                        apictl add env dev --apim ${WSO2_APIM_HOST_DEV}
                         apictl add env sit --apim ${WSO2_APIM_HOST_SIT}
+                        apictl add env dev --apim ${WSO2_APIM_HOST_DEV} --admin ${WSO2_ADMINPORTAL_HOST_DEV} --publisher ${WSO2_PUBLISHER_HOST_DEV} --devportal ${WSO2_DEVPORTAL_HOST_DEV} --mi ${WSO2_MI_HOST_DEV}
                         echo "---------- Start APICTL Login ---------"
                         apictl login dev -u ${WSO2_USERNAME} -p ${WSO2_PASSWORD} --insecure
+                        apictl set --export-directory /Users/basam/.wso2apictl/exported
+                        apictl export api -n PizzaShackAPI -v 1.0.0 -e dev
+                        apictl logout dev -k
                         echo "---------- Start Set Export Directory ---------"
                         pwd
                         ls -lrt
