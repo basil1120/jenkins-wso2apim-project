@@ -15,6 +15,13 @@ pipeline {
         WSO2_ADMINPORTAL_HOST_DEV ="https://localhost:9443/admin"
         WSO2_ADMINPORTAL_HOST_SIT ="https://localhost:9443/admin"
 
+        // Select Environment (Set this as a parameter or in Jenkins UI)
+        SELECTED_ENV = "DEV"
+
+    }
+
+    parameters {
+        choice(name: 'ENVIRONMENT', choices: ['DEV', 'SIT', 'UAT', 'PRD'], description: 'Select API Manager Environment')
     }
 
     stages {
