@@ -78,12 +78,12 @@ pipeline {
                         apictl set --http-request-timeout 90000
                         apictl set --tls-renegotiation-mode freely
                         echo "---------- Starting Setting APICTL Environments ---------"
-                        apictl add env sit --apim ${WSO2_APIM_HOST_SIT}
                         apictl add env dev --apim ${WSO2_APIM_HOST_DEV} --admin ${WSO2_ADMINPORTAL_HOST_DEV} --publisher ${WSO2_PUBLISHER_HOST_DEV} --devportal ${WSO2_DEVPORTAL_HOST_DEV} --mi ${WSO2_MI_HOST_DEV}
+                        apictl add env sit --apim ${WSO2_APIM_HOST_SIT}
                         echo "---------- Start APICTL Login ---------"
                         apictl login dev -u ${WSO2_USERNAME} -p ${WSO2_PASSWORD} --insecure
                         apictl set --export-directory /Users/basam/.wso2apictl/exported
-                        apictl export api -n PizzaShackAPI -v 1.0.0 -e dev -k
+                        apictl export api -n PizzaShackAPI -v 1.0.0 -e dev -r admin -k
                         apictl logout dev -k
                         echo "---------- Start Set Export Directory ---------"
                         pwd
