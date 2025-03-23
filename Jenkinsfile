@@ -2,15 +2,19 @@ pipeline {
     agent any
 
     environment {
+
+        WSO2_TENANT    = "carbon.super"  // Change if using a tenant
+        WSO2_MI_HOST_DEV = "https://localhost:8253"
+        WSO2_MI_HOST_SIT = "https://localhost:8253"
         WSO2_APIM_HOST_DEV = "https://localhost:9443"
         WSO2_APIM_HOST_SIT = "https://localhost:9443"
-        WSO2_APIM_HOST_UAT = "https://localhost:9443"
-        WSO2_APIM_HOST_PRD = "https://localhost:9443"
-        WSO2_TENANT = "carbon.super"
-    }
+        WSO2_PUBLISHER_HOST_DEV ="https://localhost:9443/publisher"
+        WSO2_PUBLISHER_HOST_SIT ="https://localhost:9443/publisher"
+        WSO2_DEVPORTAL_HOST_DEV ="https://localhost:9443/devportal"
+        WSO2_DEVPORTAL_HOST_SIT ="https://localhost:9443/devportal"
+        WSO2_ADMINPORTAL_HOST_DEV ="https://localhost:9443/admin"
+        WSO2_ADMINPORTAL_HOST_SIT ="https://localhost:9443/admin"
 
-    parameters {
-        choice(name: 'ENVIRONMENT', choices: ['DEV', 'SIT', 'UAT', 'PRD'], description: 'Select API Manager Environment')
     }
 
     stages {
@@ -25,70 +29,59 @@ pipeline {
                         sudo mv apictl /usr/local/bin/
                         chmod +x /usr/local/bin/apictl
                     else
-                        echo "APICTL already installed - Version:"
                         apictl version
+                        echo "APICTL already installed"
                     fi
                     """
                 }
             }
         }
 
-        stage('Validate & Add APICTL Environment') {
+        stage('Clean & Remove APICTL Environments') {
             steps {
                 script {
-                    def apiEnv = params.ENVIRONMENT.toLowerCase()
-                    def apiHost = ""
-
-                    switch(apiEnv) {
-                        case "dev":
-                            apiHost = env.WSO2_APIM_HOST_DEV
-                            break
-                        case "sit":
-                            apiHost = env.WSO2_APIM_HOST_SIT
-                            break
-                        case "uat":
-                            apiHost = env.WSO2_APIM_HOST_UAT
-                            break
-                        case "prd":
-                            apiHost = env.WSO2_APIM_HOST_PRD
-                            break
-                    }
-
                     sh """
-                    echo "Checking if APICTL environment '${apiEnv}' already exists..."
-                    if apictl list env | grep -w "${apiEnv}"; then
-                        echo "Environment '${apiEnv}' already exists. Skipping addition."
-                    else
-                        echo "Adding APICTL environment '${apiEnv}'..."
-                        apictl add env ${apiEnv} --apim ${apiHost}
-                    fi
+                    echo "---------- Listing APICTL Environments ---------"
+                    apictl list env > apictl_envs.txt
+
+                    echo "---------- Removing APICTL Environments ---------"
+                    while read -r envName _; do
+                        if [ "\$envName" != "NAME" ]; then
+                            echo "Removing APICTL environment: \$envName"
+                            apictl remove env "\$envName"
+                        fi
+                    done < <(tail -n +2 apictl_envs.txt)
                     """
                 }
             }
         }
 
-        stage('Validate & Login to WSO2 API Manager') {
+
+        stage('Login to WSO2 API Manager') {
             steps {
                 script {
-                    def apiEnv = params.ENVIRONMENT.toLowerCase()
-
                     withCredentials([usernamePassword(credentialsId: 'WSO2_CREDENTIALS', usernameVariable: 'WSO2_USERNAME', passwordVariable: 'WSO2_PASSWORD')]) {
                         sh """
-                        echo "Checking if already logged into '${apiEnv}'..."
-                        if apictl get apis -e "${apiEnv}" --insecure > /dev/null 2>&1; then
-                            echo "Already logged into '${apiEnv}'. Skipping login."
-                        else
-                            echo "Logging into WSO2 API Manager ('${apiEnv}')..."
-                            apictl login "${apiEnv}" -u ${WSO2_USERNAME} -p ${WSO2_PASSWORD} --insecure
-                        fi
+                        echo "---------- Starting Setting APICTL Configurations ---------"
+                        apictl set --http-request-timeout 90000
+                        apictl set --tls-renegotiation-mode freely
+                        echo "---------- Starting Setting APICTL Environments ---------"
+                        apictl add env dev --apim ${WSO2_APIM_HOST_DEV}
+                        apictl add env sit --apim ${WSO2_APIM_HOST_SIT}
+                        echo "---------- Start APICTL Login ---------"
+                        apictl login dev -u ${WSO2_USERNAME} -p ${WSO2_PASSWORD} --insecure
+                        echo "---------- Start Set Export Directory ---------"
+                        pwd
+                        ls -lrt
                         """
                     }
                 }
             }
         }
+
     }
 
-    post {
+        post {
         success {
             script {
                 def subject = "✅ SUCCESS: WSO2 APICTL Login & Setup Completed for ${params.ENVIRONMENT}"
