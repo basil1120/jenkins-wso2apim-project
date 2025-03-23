@@ -2,7 +2,6 @@ pipeline {
     agent any
 
     environment {
-        // WSO2 API Manager Hosts
         WSO2_APIM_HOST_DEV = "https://localhost:9443"
         WSO2_APIM_HOST_SIT = "https://localhost:9443"
         WSO2_APIM_HOST_UAT = "https://localhost:9443"
@@ -40,7 +39,6 @@ pipeline {
                     def apiEnv = params.ENVIRONMENT.toLowerCase()
                     def apiHost = ""
 
-                    // Select API Manager Host based on the chosen environment
                     switch(apiEnv) {
                         case "dev":
                             apiHost = env.WSO2_APIM_HOST_DEV
@@ -58,8 +56,7 @@ pipeline {
 
                     sh """
                     echo "Checking if APICTL environment '${apiEnv}' already exists..."
-                    apictl list env | grep -w '${apiEnv}'
-                    if [ $? -eq 0 ]; then
+                    if apictl list env | grep -w "${apiEnv}"; then
                         echo "Environment '${apiEnv}' already exists. Skipping addition."
                     else
                         echo "Adding APICTL environment '${apiEnv}'..."
@@ -78,12 +75,11 @@ pipeline {
                     withCredentials([usernamePassword(credentialsId: 'WSO2_CREDENTIALS', usernameVariable: 'WSO2_USERNAME', passwordVariable: 'WSO2_PASSWORD')]) {
                         sh """
                         echo "Checking if already logged into '${apiEnv}'..."
-                        apictl get apis -e ${apiEnv} --insecure > /dev/null 2>&1
-                        if [ $? -eq 0 ]; then
+                        if apictl get apis -e "${apiEnv}" --insecure > /dev/null 2>&1; then
                             echo "Already logged into '${apiEnv}'. Skipping login."
                         else
                             echo "Logging into WSO2 API Manager ('${apiEnv}')..."
-                            apictl login ${apiEnv} -u ${WSO2_USERNAME} -p ${WSO2_PASSWORD} --insecure
+                            apictl login "${apiEnv}" -u ${WSO2_USERNAME} -p ${WSO2_PASSWORD} --insecure
                         fi
                         """
                     }
