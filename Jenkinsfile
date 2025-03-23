@@ -32,7 +32,11 @@ pipeline {
                 script {
                     withCredentials([usernamePassword(credentialsId: 'WSO2_CREDENTIALS', usernameVariable: 'WSO2_USERNAME', passwordVariable: 'WSO2_PASSWORD')]) {
                         sh """
-                        apictl login ${WSO2_APIM_HOST} -u ${WSO2_USERNAME} -p ${WSO2_PASSWORD} --insecure
+                        apictl set --http-request-timeout 90000
+                        apictl set --tls-renegotiation-mode freely
+                        apictl add env dev --apim https://localhost:9443
+                        apictl add env prd --apim https://localhost:9443
+                        apictl login dev -u ${WSO2_USERNAME} -p ${WSO2_PASSWORD} --insecure
                         """
                     }
                 }
@@ -44,7 +48,7 @@ pipeline {
         //         script {
         //             withCredentials([usernamePassword(credentialsId: 'WSO2_CREDENTIALS', usernameVariable: 'WSO2_USERNAME', passwordVariable: 'WSO2_PASSWORD')]) {
         //                 sh """
-        //                 apictl login ${WSO2_APIM_HOST} -u ${WSO2_USERNAME} -p ${WSO2_PASSWORD} -t ${WSO2_TENANT} --insecure
+        //                 apictl login ${WSO2_APIM_HOST} -u ${WSO2_USERNAME} -p ${WSO2_PASSWORD} --insecure
         //                 """
         //             }
         //         }
