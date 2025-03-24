@@ -115,7 +115,7 @@ pipeline {
                         for api_zip in "\$EXPORT_DIR"/*.zip; do
                             if [[ -f "\$api_zip" ]]; then
                                 echo "Importing API: \$api_zip..."
-                                apictl import-api -f "\$api_zip" -e dev -k ${WSO2_USERNAME} -w ${WSO2_PASSWORD} --insecure
+                                apictl import api -f "\$api_zip" -e dev --insecure
                                 echo "------------------------------"
                             else
                                 echo "No ZIP files found in \$EXPORT_DIR"
