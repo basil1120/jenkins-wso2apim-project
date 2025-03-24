@@ -10,6 +10,7 @@ pipeline {
         //API Manager Host
         WSO2_APIM_HOST_DEV = "https://localhost:9443"
         WSO2_APIM_HOST_SIT = "https://localhost:9443"
+        WSO2_APIM_HOST_CLOUD = "https://api.mwnmarketplace.com:30532"
         //Publisher Host
         WSO2_PUBLISHER_HOST_DEV ="https://localhost:9443/publisher"
         WSO2_PUBLISHER_HOST_SIT ="https://localhost:9443/publisher"
@@ -80,12 +81,13 @@ pipeline {
                         echo "---------- Starting Setting APICTL Environments ----------"
                         apictl add env dev --apim ${WSO2_APIM_HOST_DEV} --admin ${WSO2_ADMINPORTAL_HOST_DEV} --publisher ${WSO2_PUBLISHER_HOST_DEV} --devportal ${WSO2_DEVPORTAL_HOST_DEV} --mi ${WSO2_MI_HOST_DEV}
                         apictl add env sit --apim ${WSO2_APIM_HOST_SIT}
+                        apictl add env cloud --apim ${WSO2_APIM_HOST_CLOUD}
                         echo "---------- Starting APICTL Login -------------------------"
-                        apictl login dev -u ${WSO2_USERNAME} -p ${WSO2_PASSWORD} --insecure
+                        apictl login cloud -u ${WSO2_USERNAME} -p ${WSO2_PASSWORD} --insecure
                         apictl set --export-directory /Users/basam/.wso2apictl/exported
-                        apictl get apis -e dev --insecure
-                        apictl export apis -e dev --insecure
-                        apictl logout dev -k
+                        apictl get apis -e cloud --insecure
+                        apictl export apis -e cloud --insecure
+                        apictl logout cloud --insecure
                         echo "---------- Starting Listing Directory Contents -----------"
                         pwd
                         ls -lrt
