@@ -69,34 +69,67 @@ pipeline {
             }
         }
 
+        stage('Add / Setting APICTL Environments') {
+            steps {
+                script {
+                    sh """
+                    echo "---------- Starting Setting APICTL Environments ----------"
+                    apictl set --http-request-timeout 90000
+                    apictl set --tls-renegotiation-mode freely
+                    apictl add env dev --apim ${WSO2_APIM_HOST_DEV} --admin ${WSO2_ADMINPORTAL_HOST_DEV} --publisher ${WSO2_PUBLISHER_HOST_DEV} --devportal ${WSO2_DEVPORTAL_HOST_DEV} --mi ${WSO2_MI_HOST_DEV}
+                    apictl add env sit --apim ${WSO2_APIM_HOST_SIT}
+                    apictl add env cloud --apim ${WSO2_APIM_HOST_CLOUD}
+                    """
+                }
+            }
+        }
 
-        stage('Login to WSO2 API Manager') {
+        stage('Export APIs from WSO2 API Manager Source') {
             steps {
                 script {
                     withCredentials([usernamePassword(credentialsId: 'WSO2_CREDENTIALS', usernameVariable: 'WSO2_USERNAME', passwordVariable: 'WSO2_PASSWORD')]) {
                         sh """
-                        echo "---------- Starting Setting APICTL Configurations ---------"
-                        apictl set --http-request-timeout 90000
-                        apictl set --tls-renegotiation-mode freely
-                        echo "---------- Starting Setting APICTL Environments ----------"
-                        apictl add env dev --apim ${WSO2_APIM_HOST_DEV} --admin ${WSO2_ADMINPORTAL_HOST_DEV} --publisher ${WSO2_PUBLISHER_HOST_DEV} --devportal ${WSO2_DEVPORTAL_HOST_DEV} --mi ${WSO2_MI_HOST_DEV}
-                        apictl add env sit --apim ${WSO2_APIM_HOST_SIT}
-                        apictl add env cloud --apim ${WSO2_APIM_HOST_CLOUD}
-                        echo "---------- Starting APICTL Login -------------------------"
+                        echo "---------- Starting Login To Source Environment & Exporting ----------"
                         apictl login cloud -u ${WSO2_USERNAME} -p ${WSO2_PASSWORD} --insecure
                         apictl set --export-directory /Users/basam/.wso2apictl/exported
                         apictl get apis -e cloud --insecure
                         apictl export apis -e cloud --insecure
                         apictl logout cloud --insecure
-                        echo "---------- Starting Listing Directory Contents -----------"
-                        pwd
-                        ls -lrt
                         """
                     }
                 }
             }
         }
 
+        stage('Import APIs to WSO2 API Manager Destination') {
+            steps {
+                script {
+                    withCredentials([usernamePassword(credentialsId: 'WSO2_CREDENTIALS', usernameVariable: 'WSO2_USERNAME', passwordVariable: 'WSO2_PASSWORD')]) {
+                        sh """
+                        echo "---------- Starting Login To Destination Environment & Importing ----------"
+                        apictl login dev -u ${WSO2_USERNAME} -p ${WSO2_PASSWORD} --insecure
+                        echo "---------- Importing Exported APIs ----------"
+                        EXPORT_DIR="/Users/basam/.wso2apictl/exported"
+
+                        for api_zip in "\$EXPORT_DIR"/*.zip; do
+                            if [[ -f "\$api_zip" ]]; then
+                                echo "Importing API: \$api_zip..."
+                                apictl import-api -f "\$api_zip" -e dev -k ${WSO2_USERNAME} -w ${WSO2_PASSWORD} --insecure
+                                echo "------------------------------"
+                            else
+                                echo "No ZIP files found in \$EXPORT_DIR"
+                            fi
+                        done
+
+                        echo "✅ API import process completed!"
+
+                        echo "---------- Logging out from Destination Environment (dev) -----------"
+                        apictl logout dev --insecure
+                        """
+                    }
+                }
+            }
+        }
     }
 
         post {
