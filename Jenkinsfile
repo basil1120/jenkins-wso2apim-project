@@ -109,7 +109,8 @@ pipeline {
                         echo "---------- Starting Login To Destination Environment & Importing ----------"
                         apictl login dev -u ${WSO2_USERNAME} -p ${WSO2_PASSWORD} --insecure
                         echo "---------- Importing Exported APIs ----------"
-                        EXPORT_DIR="/Users/basam/.wso2apictl/exported"
+                        EXPORT_DIRX="/Users/basam/.wso2apictl/exported"
+                        EXPORT_DIR="/Users/basam/.wso2apictl/exported/migration/cloud/tenant-default/apis"
 
                         for api_zip in "\$EXPORT_DIR"/*.zip; do
                             if [[ -f "\$api_zip" ]]; then
