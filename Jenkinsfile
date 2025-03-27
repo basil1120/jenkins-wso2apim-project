@@ -3,7 +3,7 @@ pipeline {
 
     environment {
 
-        WSO2_TENANT    = "carbon.super"  // Change if using a tenant
+        WSO2_TENANT = "carbon.super"  // Change if using a tenant
         //MI Host
         WSO2_MI_HOST_DEV = "https://localhost:8253"
         WSO2_MI_HOST_SIT = "https://localhost:8253"
@@ -20,6 +20,8 @@ pipeline {
         //Admin-Portal Host
         WSO2_ADMINPORTAL_HOST_DEV ="https://localhost:9443/admin"
         WSO2_ADMINPORTAL_HOST_SIT ="https://localhost:9443/admin"
+
+        TEST_VAR = var
 
         // Select Environment (Set this as a parameter or in Jenkins UI)
         SELECTED_ENV = "DEV"

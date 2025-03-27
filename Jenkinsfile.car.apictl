@@ -1,0 +1,60 @@
+pipeline {
+    agent any
+
+    environment {
+        GIT_REPO = 'git@your-repo-url.git'  // Replace with your repo URL
+        BRANCH = 'main'  // Change if needed
+        MAVEN_HOME = tool 'Maven'  // Ensure Maven is configured in Jenkins
+        APIMCTL_PATH = '/usr/local/bin/apictl'  // Update if APIMCTL is installed elsewhere
+        ENV_NAME = 'wso2-mi'  // WSO2 Micro Integrator environment name in APIMCTL
+        MI_HOST = 'https://your-wso2-mi-host'  // Update with actual host
+        MI_USERNAME = credentials('wso2_mi_user')  // Jenkins credential ID for MI username
+        MI_PASSWORD = credentials('wso2_mi_pass')  // Jenkins credential ID for MI password
+    }
+
+    stages {
+        stage('Clone Repository') {
+            steps {
+                git branch: "${BRANCH}", url: "${GIT_REPO}"
+            }
+        }
+
+        stage('Build with Maven') {
+            steps {
+                sh "${MAVEN_HOME}/bin/mvn clean install"
+            }
+        }
+
+        stage('Setup WSO2 MI Environment') {
+            steps {
+                script {
+                    sh "${APIMCTL_PATH} mi add env ${ENV_NAME} --mi ${MI_HOST}"
+                    sh "${APIMCTL_PATH} mi list envs"
+                }
+            }
+        }
+
+        stage('Deploy CAR File') {
+            steps {
+                script {
+                    def carFile = sh(script: "find target -name '*.car'", returnStdout: true).trim()
+                    if (carFile) {
+                        sh "${APIMCTL_PATH} login ${ENV_NAME} -u ${MI_USERNAME} -p ${MI_PASSWORD} --verbose"
+                        sh "${APIMCTL_PATH} mi import artifact --file ${carFile} -e ${ENV_NAME}"
+                    } else {
+                        error('CAR file not found!')
+                    }
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'Build and deployment successful!'
+        }
+        failure {
+            echo 'Build or deployment failed!'
+        }
+    }
+}

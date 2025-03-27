@@ -1,0 +1,49 @@
+pipeline {
+    agent any
+
+    environment {
+        GIT_REPO = 'https://github.com/basil1120/wso2-micro-integrator-apps.git'  // Replace with your repo URL
+        BRANCH = 'main'  // Change if needed
+        MAVEN_HOME = tool 'Maven'  // Ensure Maven is configured in Jenkins
+        DEPLOY_PATH = '/opt/wso2mi/repository/deployment/server/carbonapps/'  // Update the deployment path
+        REMOTE_SERVER = 'host-name'  // Replace with your WSO2 server
+        SSH_USER = credentials('wso2_ssh_user')  // Jenkins credential ID for username
+        SSH_PASS = credentials('wso2_ssh_pass')  // Jenkins credential ID for password
+    }
+
+    stages {
+        stage('Clone Repository') {
+            steps {
+                git branch: "${BRANCH}", url: "${GIT_REPO}"
+            }
+        }
+
+        stage('Build with Maven') {
+            steps {
+                sh "${MAVEN_HOME}/bin/mvn clean install"
+            }
+        }
+
+        stage('Deploy CAR File') {
+            steps {
+                script {
+                    def carFile = sh(script: "find target -name '*.car'", returnStdout: true).trim()
+                    if (carFile) {
+                        sh "sshpass -p '${SSH_PASS}' scp ${carFile} ${SSH_USER}@${REMOTE_SERVER}:${DEPLOY_PATH}"
+                    } else {
+                        error('CAR file not found!')
+                    }
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'Build and deployment successful!'
+        }
+        failure {
+            echo 'Build or deployment failed!'
+        }
+    }
+}
